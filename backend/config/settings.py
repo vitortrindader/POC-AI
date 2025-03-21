@@ -31,7 +31,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # Em produção, especifique os domínios permitidos
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Vite development server
+]
+CORS_ALLOW_ALL_ORIGINS = False  # Em produção, especifique os domínios permitidos
 
 ROOT_URLCONF = 'config.urls'
 

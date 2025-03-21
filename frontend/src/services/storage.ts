@@ -86,7 +86,9 @@ export const deleteFile = async (filePath: string): Promise<void> => {
 
 export const getFilePreview = async (filePath: string) => {
   try {
-    const response = await fetch(`${API_URL}/files/preview/${filePath}/`);
+    // Codificar cada parte do caminho separadamente
+    const encodedPath = filePath.split('/').map(part => encodeURIComponent(part)).join('/');
+    const response = await fetch(`${API_URL}/files/preview/${encodedPath}/`);
     return handleResponse(response);
   } catch (error) {
     console.error('Erro ao buscar preview:', error);

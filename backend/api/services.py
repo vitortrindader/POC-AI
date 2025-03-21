@@ -3,6 +3,7 @@ from google.cloud import storage
 from django.conf import settings
 import logging
 import mimetypes
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -153,41 +154,20 @@ def get_file_preview(file_path):
         if not blob.content_type:
             blob.content_type = guess_content_type(file_path)
             blob.patch()
-        
-        # Gerar URL assinada temporária para arquivos de mídia e PDFs
-        if (blob.content_type and (
-            blob.content_type.startswith(('image/', 'video/', 'audio/')) or
-            blob.content_type == 'application/pdf'
-        )):
-            url = blob.generate_signed_url(
-                version="v4",
-                expiration=datetime.timedelta(minutes=15),
-                method="GET"
-            )
-            return {
-                'type': 'media',
-                'url': url,
-                'content_type': blob.content_type
-            }
-        
-        # Para arquivos de texto, retornar o conteúdo
-        if blob.content_type and (
-            blob.content_type.startswith('text/') or 
-            blob.content_type in ['application/json', 'application/xml']
-        ):
-            content = blob.download_as_string().decode('utf-8')
-            return {
-                'type': 'text',
-                'content': content,
-                'content_type': blob.content_type
-            }
-            
-        # Para outros tipos de arquivo, retornar apenas metadados
+
+        # Gerar URL assinada temporária para todos os tipos de arquivo
+        url = blob.generate_signed_url(
+            version="v4",
+            expiration=datetime.timedelta(minutes=15),
+            method="GET",
+        )
+
         return {
-            'type': 'other',
-            'content_type': blob.content_type,
+            'type': 'file',
+            'url': url,
+            'content_type': blob.content_type or 'application/octet-stream',
             'size': blob.size,
-            'name': blob.name
+            'name': os.path.basename(file_path)
         }
         
     except Exception as e:

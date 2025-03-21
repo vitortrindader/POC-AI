@@ -10,6 +10,10 @@ from .services import (
     delete_file,
     get_file_preview  # Adicione esta linha
 )
+import urllib.parse
+import logging
+
+logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
 def folders_list(request):
@@ -93,36 +97,24 @@ def delete_file_view(request, file_path):
 
 @api_view(['GET'])
 def file_preview(request, file_path):
+    """
+    Retorna uma URL assinada ou o conteúdo do arquivo para preview
+    """
     try:
-        preview_data = get_file_preview(file_path)
+        # Decodificar o caminho do arquivo
+        decoded_path = '/'.join(urllib.parse.unquote(part) for part in file_path.split('/'))
+        preview_data = get_file_preview(decoded_path)
         
-        # Se for mídia, redirecionar para a URL assinada
-        if preview_data['type'] == 'media':
-            return Response({
-                'type': 'media',
-                'url': preview_data['url'],
-                'content_type': preview_data['content_type']
-            })
-        
-        # Se for texto, retornar o conteúdo
-        elif preview_data['type'] == 'text':
-            return Response({
-                'type': 'text',
-                'content': preview_data['content'],
-                'content_type': preview_data['content_type']
-            })
-        
-        # Para outros tipos, retornar metadados
-        else:
-            return Response({
-                'type': 'other',
-                'content_type': preview_data['content_type'],
-                'size': preview_data['size'],
-                'name': preview_data['name']
-            })
-            
+        return Response({
+            'type': 'file',
+            'url': preview_data['url'],
+            'content_type': preview_data['content_type'],
+            'size': preview_data['size'],
+            'name': preview_data['name']
+        })
     except Exception as e:
+        logger.error(f"Erro ao gerar preview do arquivo: {str(e)}")
         return Response(
-            {'error': str(e)}, 
+            {'error': 'Erro ao gerar preview do arquivo'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

@@ -5,6 +5,7 @@ import FolderCard from '../components/FolderCard';
 import FileTable from '../components/FileTable';
 import NewFolderForm from '../components/NewFolderForm';
 import FilePreview from '../components/FilePreview.tsx';
+import ChatPreview from '../components/ChatPreview';
 
 const Documents = () => {
   const [folders, setFolders] = useState<string[]>([]);
@@ -16,6 +17,7 @@ const Documents = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<StorageFile | null>(null);
+  const [preview, setPreview] = useState<StorageFile | null>(null);
 
   useEffect(() => {
     loadFolders();
@@ -39,11 +41,13 @@ const Documents = () => {
         setSelectedFolder(null);
         setFiles([]);
         setSelectedFile(null);
+        setPreview(null);
         return;
       }
 
       setSelectedFolder(folder);
       setSelectedFile(null);
+      setPreview(null);
       setLoading(true);
       const filesList = await getFilesByPrefix(folder);
       setFiles(filesList);
@@ -78,6 +82,7 @@ const Documents = () => {
       if (selectedFolder === folder) {
         setSelectedFolder(null);
         setFiles([]);
+        setPreview(null);
       }
       await loadFolders();
     } catch (err) {
@@ -235,9 +240,9 @@ const Documents = () => {
                       </div>
                     </div>
                     
-                    {/* Right side - Empty for now */}
+                    {/* Right side - Chat */}
                     <div className="w-1/2 h-full bg-gray-50">
-                      {/* Conteúdo futuro aqui */}
+                      <ChatPreview file={selectedFile} />
                     </div>
                   </div>
                 </div>
