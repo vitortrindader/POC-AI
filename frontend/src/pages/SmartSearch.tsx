@@ -1,3 +1,5 @@
+import React from 'react';
+
 const SmartSearch = () => {
   return (
     <div className="space-y-6">
