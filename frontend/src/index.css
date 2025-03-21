@@ -1,1 +1,53 @@
 @import 'tailwindcss';
+
+/* Estilos para o PDF viewer */
+.pdf-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.pdf-page {
+  max-width: 100%;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  margin: 10px 0;
+  background-color: white;
+  padding: 10px;
+}
+
+.pdf-page canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+/* Melhorias na visualização do PDF */
+.react-pdf__Document {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.react-pdf__Page {
+  margin: 1em 0;
+  padding: 1em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
+
+/* Estilos para o texto selecionável */
+.react-pdf__Page__textContent {
+  pointer-events: none;
+  opacity: 0.2;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  user-select: text;
+}
+
+/* Estilos para as camadas de texto e anotações do PDF */
+.react-pdf__Page__annotations {
+  display: none;
+}

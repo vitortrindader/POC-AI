@@ -83,3 +83,13 @@ export const deleteFile = async (filePath: string): Promise<void> => {
     throw error;
   }
 };
+
+export const getFilePreview = async (filePath: string) => {
+  try {
+    const response = await fetch(`${API_URL}/files/preview/${filePath}/`);
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Erro ao buscar preview:', error);
+    throw error;
+  }
+};

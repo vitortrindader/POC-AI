@@ -4,6 +4,7 @@ import { StorageFile } from '../types';
 import FolderCard from '../components/FolderCard';
 import FileTable from '../components/FileTable';
 import NewFolderForm from '../components/NewFolderForm';
+import FilePreview from '../components/FilePreview.tsx';
 
 const Documents = () => {
   const [folders, setFolders] = useState<string[]>([]);
@@ -14,6 +15,7 @@ const Documents = () => {
   const [isAddingFolder, setIsAddingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<StorageFile | null>(null);
 
   useEffect(() => {
     loadFolders();
@@ -36,10 +38,12 @@ const Documents = () => {
       if (selectedFolder === folder) {
         setSelectedFolder(null);
         setFiles([]);
+        setSelectedFile(null);
         return;
       }
 
       setSelectedFolder(folder);
+      setSelectedFile(null);
       setLoading(true);
       const filesList = await getFilesByPrefix(folder);
       setFiles(filesList);
@@ -122,6 +126,10 @@ const Documents = () => {
     }
   };
 
+  const handleFileClick = (file: StorageFile) => {
+    setSelectedFile(file);
+  };
+
   if (loading && !selectedFolder) {
     return <div className="flex items-center justify-center h-full">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
@@ -193,7 +201,48 @@ const Documents = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
             </div>
           ) : (
-            <FileTable files={files} onDelete={handleDeleteFile} />
+            <div className="relative">
+              <FileTable 
+                files={files} 
+                onDelete={handleDeleteFile}
+                onFileClick={handleFileClick}
+                selectedFile={selectedFile}
+              />
+              
+              {/* Preview Modal */}
+              {selectedFile && (
+                <div 
+                  className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" 
+                  onClick={() => setSelectedFile(null)}
+                >
+                  <div 
+                    className="bg-white w-full h-full flex" 
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {/* Left side - Preview */}
+                    <div className="w-1/2 h-full overflow-auto border-r border-gray-200">
+                      <div className="p-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-xl font-semibold">{selectedFile.name}</h3>
+                          <button 
+                            onClick={() => setSelectedFile(null)}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <FilePreview file={selectedFile} />
+                      </div>
+                    </div>
+                    
+                    {/* Right side - Empty for now */}
+                    <div className="w-1/2 h-full bg-gray-50">
+                      {/* Conteúdo futuro aqui */}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}

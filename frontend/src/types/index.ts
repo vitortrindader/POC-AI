@@ -3,6 +3,7 @@ export interface StorageFile {
     size: number;
     updated: string;
     type: string;
+    path: string;
 }
 
 export interface File {

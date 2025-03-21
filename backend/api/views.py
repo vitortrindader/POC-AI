@@ -7,7 +7,8 @@ from .services import (
     add_new_folder, 
     upload_file, 
     delete_folder, 
-    delete_file
+    delete_file,
+    get_file_preview  # Adicione esta linha
 )
 
 @api_view(['GET'])
@@ -84,6 +85,42 @@ def delete_file_view(request, file_path):
     try:
         delete_file(file_path)
         return Response(status=status.HTTP_204_NO_CONTENT)
+    except Exception as e:
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def file_preview(request, file_path):
+    try:
+        preview_data = get_file_preview(file_path)
+        
+        # Se for mídia, redirecionar para a URL assinada
+        if preview_data['type'] == 'media':
+            return Response({
+                'type': 'media',
+                'url': preview_data['url'],
+                'content_type': preview_data['content_type']
+            })
+        
+        # Se for texto, retornar o conteúdo
+        elif preview_data['type'] == 'text':
+            return Response({
+                'type': 'text',
+                'content': preview_data['content'],
+                'content_type': preview_data['content_type']
+            })
+        
+        # Para outros tipos, retornar metadados
+        else:
+            return Response({
+                'type': 'other',
+                'content_type': preview_data['content_type'],
+                'size': preview_data['size'],
+                'name': preview_data['name']
+            })
+            
     except Exception as e:
         return Response(
             {'error': str(e)}, 

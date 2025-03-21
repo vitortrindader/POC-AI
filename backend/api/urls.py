@@ -8,4 +8,5 @@ urlpatterns = [
     path('files/<str:prefix>/', views.files_by_prefix),
     path('files/upload/<str:folder>/', views.upload_file_to_folder),
     path('files/delete/<path:file_path>/', views.delete_file_view),
+    path('files/preview/<path:file_path>/', views.file_preview),
 ]

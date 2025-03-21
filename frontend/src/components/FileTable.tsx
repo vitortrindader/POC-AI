@@ -1,13 +1,15 @@
-import { File } from '../types';
+import { StorageFile } from '../types';
 import { formatFileSize } from '../utils/format.ts';
 import React from 'react';
 
 interface FileTableProps {
-  files: File[];
+  files: StorageFile[];
   onDelete: (filePath: string) => void;
+  onFileClick: (file: StorageFile) => void;
+  selectedFile: StorageFile | null;
 }
 
-const FileTable = ({ files, onDelete }: FileTableProps) => {
+const FileTable = ({ files, onDelete, onFileClick, selectedFile }: FileTableProps) => {
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
@@ -28,8 +30,14 @@ const FileTable = ({ files, onDelete }: FileTableProps) => {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {files.map((file, index) => (
-            <tr key={index} className="hover:bg-gray-50">
+          {files.map((file) => (
+            <tr 
+              key={file.name}
+              onClick={() => onFileClick(file)}
+              className={`hover:bg-gray-50 cursor-pointer ${
+                selectedFile?.name === file.name ? 'bg-blue-50' : ''
+              }`}
+            >
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-900">{file.name}</div>
               </td>
@@ -45,7 +53,10 @@ const FileTable = ({ files, onDelete }: FileTableProps) => {
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right">
                 <button
-                  onClick={() => onDelete(file.name)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(file.name);
+                  }}
                   className="text-red-600 hover:text-red-900"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

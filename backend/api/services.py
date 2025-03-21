@@ -1,6 +1,8 @@
+import datetime
 from google.cloud import storage
 from django.conf import settings
 import logging
+import mimetypes
 
 logger = logging.getLogger(__name__)
 
@@ -54,17 +56,29 @@ def get_files_by_prefix(prefix):
         files = []
         for blob in blobs:
             if not blob.name.endswith('/.keep'):
+                # Forçar o content_type se não estiver definido
+                if not blob.content_type:
+                    blob.content_type = guess_content_type(blob.name)
+                    blob.patch()
+
                 files.append({
                     'name': blob.name,
                     'size': blob.size,
                     'updated': blob.updated.isoformat(),
-                    'type': blob.content_type
+                    'type': 'file',
+                    'content_type': blob.content_type,
+                    'path': blob.name
                 })
         
         return files
     except Exception as e:
         logger.error(f"Erro ao buscar arquivos: {str(e)}")
         raise
+
+def guess_content_type(filename):
+    """Tenta adivinhar o content type baseado na extensão do arquivo"""
+    content_type, _ = mimetypes.guess_type(filename)
+    return content_type or 'application/octet-stream'
 
 def delete_folder(folder_name):
     """Deleta uma pasta e todos os seus arquivos"""
@@ -117,8 +131,65 @@ def upload_file(folder_name, file_obj, file_name):
             'name': blob_name,
             'size': blob.size,
             'updated': blob.updated.isoformat(),
-            'type': blob.content_type
+            'type': 'file',
+            'content_type': blob.content_type,
+            'path': blob_name
         }
     except Exception as e:
         logger.error(f"Erro ao fazer upload do arquivo: {str(e)}")
+        raise
+
+def get_file_preview(file_path):
+    """Recupera o conteúdo do arquivo para preview"""
+    try:
+        storage_client = storage.Client.from_service_account_json(
+            settings.GOOGLE_CLOUD_CREDENTIALS
+        )
+        
+        bucket = storage_client.bucket(settings.GOOGLE_CLOUD_BUCKET_NAME)
+        blob = bucket.blob(file_path)
+        
+        # Garantir que temos um content_type
+        if not blob.content_type:
+            blob.content_type = guess_content_type(file_path)
+            blob.patch()
+        
+        # Gerar URL assinada temporária para arquivos de mídia e PDFs
+        if (blob.content_type and (
+            blob.content_type.startswith(('image/', 'video/', 'audio/')) or
+            blob.content_type == 'application/pdf'
+        )):
+            url = blob.generate_signed_url(
+                version="v4",
+                expiration=datetime.timedelta(minutes=15),
+                method="GET"
+            )
+            return {
+                'type': 'media',
+                'url': url,
+                'content_type': blob.content_type
+            }
+        
+        # Para arquivos de texto, retornar o conteúdo
+        if blob.content_type and (
+            blob.content_type.startswith('text/') or 
+            blob.content_type in ['application/json', 'application/xml']
+        ):
+            content = blob.download_as_string().decode('utf-8')
+            return {
+                'type': 'text',
+                'content': content,
+                'content_type': blob.content_type
+            }
+            
+        # Para outros tipos de arquivo, retornar apenas metadados
+        return {
+            'type': 'other',
+            'content_type': blob.content_type,
+            'size': blob.size,
+            'name': blob.name
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro ao gerar preview do arquivo: {str(e)}")
         raise
